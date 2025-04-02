@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAC Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #2c3e50;
+            --background-color: #f5f6fa;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --gradient-start: #4a90e2;
+            --gradient-end: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: var(--secondary-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        header:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .description {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .editor-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .editor-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .editor-title {
+            font-size: 1.3rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .CodeMirror {
+            height: 500px !important;
+            border-radius: 10px;
+            font-size: 14px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .generate-btn:active {
+            transform: translateY(1px);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid var(--error-color);
+            animation: slideIn 0.3s ease;
+        }
+
+        .success-message {
+            color: var(--success-color);
+            background-color: rgba(46, 204, 113, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid var(--success-color);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .example-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .example-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .example-title {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .example-code {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .loading::after {
+            content: "⚡";
+            animation: loading 1s infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes loading {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .toolbar button {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+
+        .toolbar button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .toolbar button i {
+            font-size: 1rem;
+        }
+
+        .copy-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .copy-btn.copied {
+            background-color: var(--primary-color);
+        }
+
+        .features-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .features-list li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .features-list li i {
+            color: var(--success-color);
+        }
+
+        .study-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .study-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .study-title {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .study-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .study-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .study-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .study-card-title {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .study-card-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .study-example {
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        .study-note {
+            background: rgba(74, 144, 226, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .study-tip {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .study-warning {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--error-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .study-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .study-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .study-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+            padding-bottom: 1rem;
+        }
+
+        .study-tab {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .study-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .study-tab:hover:not(.active) {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .quiz-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .quiz-question {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .quiz-option {
+            padding: 1rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(74, 144, 226, 0.05);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--error-color);
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .quiz-feedback.correct {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .quiz-feedback.incorrect {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--error-color);
+        }
+
+        .visualization-container {
+            background: #2c3e50;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            color: white;
+        }
+
+        .visualization-step {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .visualization-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .step-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .step-button:hover {
+            background: #357abd;
+        }
+
+        .step-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .glossary-item {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .glossary-term {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .glossary-definition {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .glossary-example {
+            margin-top: 0.5rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .interactive-example {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .interactive-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .interactive-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .interactive-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #dee2e6;
+            border-radius: 2px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-wrap: wrap;
+            }
+            
+            .toolbar button {
+                flex: 1 1 calc(50% - 0.5rem);
+            }
+
+            .study-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .study-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .study-tab {
+                flex: 1 1 calc(50% - 0.5rem);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-code"></i> Three Address Code Generator</h1>
+            <p class="description">Convert your C-style code into Three Address Code (TAC) representation with our advanced compiler tool</p>
+        </header>
+
+        <div class="editor-container">
+            <div class="editor-box">
+                <div class="editor-header">
+                    <span class="editor-title"><i class="fas fa-edit"></i> Input Code</span>
+                    <div class="toolbar">
+                        <button onclick="loadExample('forLoop')"><i class="fas fa-sync"></i> For Loop</button>
+                        <button onclick="loadExample('ifElse')"><i class="fas fa-code-branch"></i> If-Else</button>
+                        <button onclick="loadExample('nested')"><i class="fas fa-project-diagram"></i> Nested</button>
+                    </div>
+                </div>
+                <textarea id="codeInput"></textarea>
+                <div id="errorMessage" class="error-message"></div>
+            </div>
+
+            <div class="editor-box">
+                <div class="editor-header">
+                    <span class="editor-title"><i class="fas fa-file-code"></i> Generated TAC</span>
+                    <button onclick="copyToClipboard()" class="copy-btn" id="copyBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <textarea id="tacOutput" readonly></textarea>
+                <div id="successMessage" class="success-message"></div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="generateTAC()" class="generate-btn">
+                <i class="fas fa-magic"></i> Generate TAC
+            </button>
+            <div id="loading" class="loading">Generating TAC</div>
+        </div>
+
+        <div class="example-container">
+            <h3 class="example-title"><i class="fas fa-info-circle"></i> About Three Address Code (TAC)</h3>
+            <p>Three Address Code is an intermediate representation used in compilers that breaks down complex expressions into simpler ones. Each instruction has at most three operands.</p>
+            <br>
+            <p>Features supported:</p>
+            <ul class="features-list">
+                <li><i class="fas fa-check-circle"></i> For loops with initialization, condition, and increment</li>
+                <li><i class="fas fa-check-circle"></i> If-else statements with proper branching</li>
+                <li><i class="fas fa-check-circle"></i> Nested control structures</li>
+                <li><i class="fas fa-check-circle"></i> Basic arithmetic operations</li>
+            </ul>
+        </div>
+
+        <div class="study-section">
+            <h3 class="study-title"><i class="fas fa-graduation-cap"></i> Study Guide</h3>
+            <div class="study-tabs">
+                <div class="study-tab active" onclick="showStudyTab('basics')">Basics</div>
+                <div class="study-tab" onclick="showStudyTab('examples')">Examples</div>
+                <div class="study-tab" onclick="showStudyTab('visualization')">Visualization</div>
+                <div class="study-tab" onclick="showStudyTab('quiz')">Quiz</div>
+                <div class="study-tab" onclick="showStudyTab('glossary')">Glossary</div>
+            </div>
+
+            <div id="basics" class="study-content">
+                <div class="study-grid">
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-info-circle"></i> What is TAC?</h4>
+                        <div class="study-card-content">
+                            <p>Three Address Code (TAC) is an intermediate representation used in compilers. Each instruction has at most three operands and follows a simple format:</p>
+                            <div class="study-example">
+                                result = operand1 operator operand2
+                            </div>
+                            <div class="study-note">
+                                <strong>Note:</strong> TAC breaks down complex expressions into simpler ones, making it easier for compilers to optimize and generate machine code.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-code"></i> Basic Operations</h4>
+                        <div class="study-card-content">
+                            <p>Common TAC operations include:</p>
+                            <ul style="list-style: none; margin-top: 1rem;">
+                                <li><i class="fas fa-check"></i> Assignment: x = y</li>
+                                <li><i class="fas fa-check"></i> Arithmetic: t1 = a + b</li>
+                                <li><i class="fas fa-check"></i> Comparison: t2 = x > y</li>
+                                <li><i class="fas fa-check"></i> Control flow: ifFalse t1 goto 200</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-exclamation-triangle"></i> Common Pitfalls</h4>
+                        <div class="study-card-content">
+                            <div class="study-warning">
+                                <strong>Warning:</strong> Always check your goto addresses!
+                            </div>
+                            <p>Common mistakes to avoid:</p>
+                            <ul style="list-style: none; margin-top: 1rem;">
+                                <li><i class="fas fa-times"></i> Incorrect goto addresses</li>
+                                <li><i class="fas fa-times"></i> Missing temporary variables</li>
+                                <li><i class="fas fa-times"></i> Improper control flow</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="examples" class="study-content" style="display: none;">
+                <div class="study-grid">
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-sync"></i> For Loop Example</h4>
+                        <div class="study-card-content">
+                            <p>Input C code:</p>
+                            <div class="study-example">
+                                for (i = 0; i < 5; i++) {
+    x = x + 1;
+}
+                            </div>
+                            <p>Generated TAC:</p>
+                            <div class="study-example">
+                                100: i = 0
+                                101: t1 = i < 5
+                                102: ifFalse t1 goto 106
+                                103: x = x + 1
+                                104: i = i + 1
+                                105: goto 101
+                                106: end
+                            </div>
+                            <button class="study-button" onclick="loadExample('forLoop')">
+                                <i class="fas fa-play"></i> Try this example
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-code-branch"></i> If-Else Example</h4>
+                        <div class="study-card-content">
+                            <p>Input C code:</p>
+                            <div class="study-example">
+                                if (x > 10) {
+    y = y + 1;
+} else {
+    y = y - 1;
+}
+                            </div>
+                            <p>Generated TAC:</p>
+                            <div class="study-example">
+                                100: t1 = x > 10
+                                101: ifFalse t1 goto 104
+                                102: y = y + 1
+                                103: goto 106
+                                104: y = y - 1
+                                105: goto 106
+                                106: end
+                            </div>
+                            <button class="study-button" onclick="loadExample('ifElse')">
+                                <i class="fas fa-play"></i> Try this example
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-project-diagram"></i> Nested Structures</h4>
+                        <div class="study-card-content">
+                            <p>Input C code:</p>
+                            <div class="study-example">
+                                for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+        if (x > y) {
+            x = x - 1;
+        } else {
+            y = y + 1;
+        }
+    }
+}
+                            </div>
+                            <div class="study-tip">
+                                <strong>Tip:</strong> Nested structures require careful management of goto addresses to maintain proper control flow.
+                            </div>
+                            <button class="study-button" onclick="loadExample('nested')">
+                                <i class="fas fa-play"></i> Try this example
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="visualization" class="study-content" style="display: none;">
+                <div class="study-grid">
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-project-diagram"></i> TAC Generation Process</h4>
+                        <div class="study-card-content">
+                            <div class="visualization-container">
+                                <div class="visualization-step active" id="step1">
+                                    <h5>Step 1: Initialization</h5>
+                                    <p>First, we initialize variables and set up the starting address (100).</p>
+                                    <div class="study-example">
+                                        100: i = 0
+                                    </div>
+                                </div>
+                                <div class="visualization-step" id="step2">
+                                    <h5>Step 2: Condition Check</h5>
+                                    <p>Next, we evaluate the loop condition and store the result in a temporary variable.</p>
+                                    <div class="study-example">
+                                        101: t1 = i < 5
+                                    </div>
+                                </div>
+                                <div class="visualization-step" id="step3">
+                                    <h5>Step 3: Control Flow</h5>
+                                    <p>We add conditional jumps based on the condition result.</p>
+                                    <div class="study-example">
+                                        102: ifFalse t1 goto 106
+                                    </div>
+                                </div>
+                                <div class="visualization-step" id="step4">
+                                    <h5>Step 4: Loop Body</h5>
+                                    <p>The loop body is executed, and variables are updated.</p>
+                                    <div class="study-example">
+                                        103: x = x + 1
+                                        104: i = i + 1
+                                    </div>
+                                </div>
+                                <div class="visualization-step" id="step5">
+                                    <h5>Step 5: Loop Continuation</h5>
+                                    <p>Finally, we add a jump back to the condition check.</p>
+                                    <div class="study-example">
+                                        105: goto 101
+                                        106: end
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-controls">
+                                <button class="step-button" onclick="prevStep()" id="prevStep">Previous</button>
+                                <button class="step-button" onclick="nextStep()" id="nextStep">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="quiz" class="study-content" style="display: none;">
+                <div class="study-grid">
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-question-circle"></i> Test Your Knowledge</h4>
+                        <div class="study-card-content">
+                            <div class="quiz-section">
+                                <div class="quiz-question">
+                                    <h5>Question 1: What is the purpose of temporary variables in TAC?</h5>
+                                    <div class="quiz-options">
+                                        <div class="quiz-option" onclick="checkAnswer(1, 1)">To store intermediate results</div>
+                                        <div class="quiz-option" onclick="checkAnswer(1, 2)">To make the code longer</div>
+                                        <div class="quiz-option" onclick="checkAnswer(1, 3)">To confuse programmers</div>
+                                        <div class="quiz-option" onclick="checkAnswer(1, 4)">To store final results</div>
+                                    </div>
+                                    <div class="quiz-feedback" id="feedback1"></div>
+                                </div>
+
+                                <div class="quiz-question">
+                                    <h5>Question 2: What is the correct format for a goto statement?</h5>
+                                    <div class="quiz-options">
+                                        <div class="quiz-option" onclick="checkAnswer(2, 1)">goto address</div>
+                                        <div class="quiz-option" onclick="checkAnswer(2, 2)">jump to address</div>
+                                        <div class="quiz-option" onclick="checkAnswer(2, 3)">go to address</div>
+                                        <div class="quiz-option" onclick="checkAnswer(2, 4)">move to address</div>
+                                    </div>
+                                    <div class="quiz-feedback" id="feedback2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="glossary" class="study-content" style="display: none;">
+                <div class="study-grid">
+                    <div class="study-card">
+                        <h4 class="study-card-title"><i class="fas fa-book"></i> TAC Glossary</h4>
+                        <div class="study-card-content">
+                            <div class="glossary-item">
+                                <div class="glossary-term">
+                                    <i class="fas fa-terminal"></i> Three Address Code
+                                </div>
+                                <div class="glossary-definition">
+                                    An intermediate representation used in compilers where each instruction has at most three operands.
+                                </div>
+                                <div class="glossary-example">
+                                    t1 = a + b
+                                </div>
+                            </div>
+
+                            <div class="glossary-item">
+                                <div class="glossary-term">
+                                    <i class="fas fa-code-branch"></i> Control Flow
+                                </div>
+                                <div class="glossary-definition">
+                                    The order in which program instructions are executed, controlled by statements like if, else, and loops.
+                                </div>
+                                <div class="glossary-example">
+                                    ifFalse t1 goto 200
+                                </div>
+                            </div>
+
+                            <div class="glossary-item">
+                                <div class="glossary-term">
+                                    <i class="fas fa-variable"></i> Temporary Variable
+                                </div>
+                                <div class="glossary-definition">
+                                    A variable used to store intermediate results during computation, typically named t1, t2, etc.
+                                </div>
+                                <div class="glossary-example">
+                                    t1 = x + y
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script>
+        // Initialize CodeMirror editors
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById("codeInput"), {
+            mode: "text/x-c++src",
+            theme: "monokai",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true
+        });
+
+        const tacEditor = CodeMirror.fromTextArea(document.getElementById("tacOutput"), {
+            mode: "text/plain",
+            theme: "monokai",
+            lineNumbers: true,
+            readOnly: true,
+            lineWrapping: true
+        });
+
+        const examples = {
+            forLoop: `for (i = 0; i < 5; i++) {
+    x = x + 1;
+}`,
+            ifElse: `if (x > 10) {
+    y = y + 1;
+} else {
+    y = y - 1;
+}`,
+            nested: `for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+        if (x > y) {
+            x = x - 1;
+        } else {
+            y = y + 1;
+        }
+    }
+}`
+        };
+
+        function loadExample(type) {
+            codeEditor.setValue(examples[type]);
+            codeEditor.focus();
+        }
+
+        async function generateTAC() {
+            const code = codeEditor.getValue();
+            const loadingDiv = document.getElementById("loading");
+            const errorDiv = document.getElementById("errorMessage");
+            const successDiv = document.getElementById("successMessage");
+
+            errorDiv.style.display = "none";
+            successDiv.style.display = "none";
+            loadingDiv.style.display = "block";
+
+            try {
+                const response = await fetch('/api/generate-tac', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    tacEditor.setValue(data.tac);
+                    successDiv.textContent = "TAC generated successfully!";
+                    successDiv.style.display = "block";
+                } else {
+                    errorDiv.textContent = data.error || "Failed to generate TAC";
+                    errorDiv.style.display = "block";
+                }
+            } catch (error) {
+                errorDiv.textContent = "Error connecting to server";
+                errorDiv.style.display = "block";
+            } finally {
+                loadingDiv.style.display = "none";
+            }
+        }
+
+        function copyToClipboard() {
+            const text = tacEditor.getValue();
+            const copyBtn = document.getElementById("copyBtn");
+            
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function showStudyTab(tabName) {
+            // Hide all study content
+            document.querySelectorAll('.study-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Update tab styles
+            document.querySelectorAll('.study-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function showStep(step) {
+            document.querySelectorAll('.visualization-step').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            document.getElementById('prevStep').disabled = step === 1;
+            document.getElementById('nextStep').disabled = step === totalSteps;
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function checkAnswer(question, answer) {
+            const options = document.querySelectorAll(`#feedback${question}`).parentElement.querySelectorAll('.quiz-option');
+            const feedback = document.getElementById(`feedback${question}`);
+            
+            options.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+            
+            if (answer === 1) {
+                options[answer - 1].classList.add('correct');
+                feedback.textContent = "Correct! Temporary variables are used to store intermediate results during computation.";
+                feedback.classList.add('correct');
+            } else {
+                options[answer - 1].classList.add('incorrect');
+                feedback.textContent = "Incorrect. Try again!";
+                feedback.classList.add('incorrect');
+            }
+            
+            feedback.style.display = 'block';
+        }
+
+        // Load default example
+        loadExample('nested');
+    </script>
+</body>
+</html> 
